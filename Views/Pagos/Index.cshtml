@@ -1,0 +1,52 @@
+@model IEnumerable<InmobiliariaAlaniz.Models.Pago>
+
+@{
+    ViewData["Title"] = "Menú";
+    
+}
+
+<h1>Inicio</h1>
+
+<p>
+    <a asp-action="Create">Crear Nuevo</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.FechaPago)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Importe)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.IdContrato)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+          
+            <td>
+                 @(item.FechaPago.Date.ToString("dd/MM/yyyy"))
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Importe)
+            </td>
+            <td>
+                @("Id Contrato: "+item.IdContrato + " - Dirección: "+item.Contrato.Inmueble.Direccion+" - Inquilino; "+item.Contrato.Inquilino.Apellido+", "+item.Contrato.Inquilino.Nombre)
+            </td>
+            <td>
+                @Html.ActionLink("Editar", "Edit", new { id=item.Id }) |
+                @Html.ActionLink("Detalles", "Details", new { id=item.Id }) |
+                @Html.ActionLink("Eliminar", "Delete", new { id=item.Id })
+            </td>
+        </tr>
+}
+<div>
+    @Html.ActionLink("Volver", "Index")
+</div>
+    </tbody>
+</table>

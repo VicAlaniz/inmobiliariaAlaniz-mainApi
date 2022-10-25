@@ -1,0 +1,77 @@
+@model InmobiliariaAlaniz.Models.Inmueble
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<h1>Crear</h1>
+
+<h4>Inmueble</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            
+            <div class="form-group">
+                <label asp-for="Direccion" class="control-label"></label>
+                <input asp-for="Direccion" class="form-control" />
+                <span asp-validation-for="Direccion" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Uso" class="control-label"></label>
+                <select class="form-control" name="Uso">
+                        <option>Casa</option>
+                        <option>Depto</option>
+                        <option>Comercio</option>
+                        <option>Otro</option>
+                </select>
+                <span asp-validation-for="Uso" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Tipo" class="control-label"></label>
+                <select class="form-control" name="Tipo">
+                        <option>Hogar</option>
+                        <option>Comercio</option>
+                </select>
+                <span asp-validation-for="Tipo" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="CantAmbientes" class="control-label"></label>
+                <input asp-for="CantAmbientes" class="form-control" />
+                <span asp-validation-for="CantAmbientes" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Coordenadas" class="control-label"></label>
+                <input asp-for="Coordenadas" class="form-control" />
+                <span asp-validation-for="Coordenadas" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Precio" class="control-label"></label>
+                <input asp-for="Precio" class="form-control" />
+                <span asp-validation-for="Precio" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="PropietarioId" class="control-label"></label>
+                <select class="form-control" name="PropietarioId">
+                    @foreach (var item in (IList<Propietario>)ViewBag.Propietarios)
+                    {
+                        <option value="@item.Id">@(item.Nombre + " " + item.Apellido)</option>
+                    }
+                </select>
+                <span asp-validation-for="PropietarioId" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Crear" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Volver</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

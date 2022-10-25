@@ -1,0 +1,56 @@
+@model InmobiliariaAlaniz.Models.CambiarClave
+
+@{
+    ViewData["Title"] = "Actualizar Clave";
+    //Usuario usuario = (Usuario)ViewBag.Usuario;
+}
+@if (ViewData["mensaje"] != null)
+{
+    <div class="row">
+        <div class="col-sm-4">
+            <div class="alert alert-info alert-dismissible fade show" role="alert">
+                <span>@ViewData["mensaje"]</span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+<h1>Actualizar Clave</h1>
+
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="CambiarClave">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        
+            <div class="form-group">
+                <label asp-for="PassVieja" class="control-label">Ingrese clave actual:</label>
+                <input asp-for="PassVieja" class="form-control" />
+                <span asp-validation-for="PassVieja" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="PassNueva" class="control-label">Ingrese clave nueva:</label>
+                <input asp-for="PassNueva" class="form-control" />
+                <span asp-validation-for="PassNueva" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="PassConfirmada" class="control-label">Confirme su clave nueva:</label>
+                <input asp-for="PassConfirmada" class="form-control" />
+                <span asp-validation-for="PassConfirmada" class="text-danger"></span>
+            </div>
+            <div class="form-group my-2">
+                <input type="submit" value="Cambiar clave" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+@Html.ActionLink("Volver", "Index", "Usuarios")
+</div>
+
+@section Scripts {
+@{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
