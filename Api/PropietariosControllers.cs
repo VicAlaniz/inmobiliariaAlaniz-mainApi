@@ -32,46 +32,9 @@ namespace InmobiliariaAlaniz.Api
 		{
 			try
 			{
-				/*contexto.Inmuebles
-                    .Include(x => x.Duenio)
-                    .Where(x => x.Duenio.Nombre == "")//.ToList() => lista de inmuebles
-                    .Select(x => x.Duenio)
-                    .ToList();//lista de propietarios*/
+				
 				var usuario = User.Identity.Name;
-				/*contexto.Contratos.Include(x => x.Inquilino).Include(x => x.Inmueble).ThenInclude(x => x.Duenio)
-                    .Where(c => c.Inmueble.Duenio.Email....);*/
-				/*var res = contexto.Propietarios.Select(x => new { x.Nombre, x.Apellido, x.Email })
-                    .SingleOrDefault(x => x.Email == usuario);*/
 				return await contexto.Propietario.SingleOrDefaultAsync(x => x.Email == usuario);
-			}
-			catch (Exception ex)
-			{
-				return BadRequest(ex);
-			}
-		}
-
-		// GET api/<controller>/5
-		[HttpGet("{id}")]
-		public async Task<IActionResult> Get(int id)
-		{
-			try
-			{
-				var entidad = await contexto.Propietario.SingleOrDefaultAsync(x => x.Id == id);
-				return entidad != null ? Ok(entidad) : NotFound();
-			}
-			catch (Exception ex)
-			{
-				return BadRequest(ex);
-			}
-		}
-
-		// GET api/<controller>/GetAll
-		[HttpGet("GetAll")]
-		public async Task<IActionResult> GetAll()
-		{
-			try
-			{
-				return Ok(await contexto.Propietario.ToListAsync());
 			}
 			catch (Exception ex)
 			{
@@ -125,26 +88,6 @@ namespace InmobiliariaAlaniz.Api
 			}
 		}
 
-		// POST api/<controller>
-		[HttpPost]
-		public async Task<IActionResult> Post([FromForm] Propietario entidad)
-		{
-			try
-			{
-				if (ModelState.IsValid)
-				{
-					await contexto.Propietario.AddAsync(entidad);
-					contexto.SaveChanges();
-					return CreatedAtAction(nameof(Get), new { id = entidad.Id }, entidad);
-				}
-				return BadRequest();
-			}
-			catch (Exception ex)
-			{
-				return BadRequest(ex);
-			}
-		}
-
 		// PUT api/<controller>/5
 		[HttpPut()]
 		public async Task<IActionResult> Put([FromBody] Propietario entidad)
@@ -166,90 +109,185 @@ namespace InmobiliariaAlaniz.Api
 
 		}
 
-		// DELETE api/<controller>/5
-		[HttpDelete("{id}")]
-		public async Task<IActionResult> Delete(int id)
-		{
-			try
-			{
-				if (ModelState.IsValid)
-				{
-					var p = contexto.Propietario.Find(id);
-					if (p == null)
-						return NotFound();
-					contexto.Propietario.Remove(p);
-					contexto.SaveChanges();
-					return Ok(p);
-				}
-				return BadRequest();
-			}
-			catch (Exception ex)
-			{
-				return BadRequest(ex);
-			}
-		}
+		[HttpPut("cambiarClave")]
+        public async Task<IActionResult> cambiarClave([FromForm] CambiarClave usuario)
+        {
+            try
+            {
+                string hashedPassVieja = Convert.ToBase64String(KeyDerivation.Pbkdf2(
+                   password: usuario.PassVieja,
+                   salt: System.Text.Encoding.ASCII.GetBytes(config["Salt"]),
+                   prf: KeyDerivationPrf.HMACSHA1,
+                   iterationCount: 1000,
+                   numBytesRequested: 256 / 8));
+                string hashedPassNueva = Convert.ToBase64String(KeyDerivation.Pbkdf2(
+                       password: usuario.PassNueva,
+                       salt: System.Text.Encoding.ASCII.GetBytes(config["Salt"]),
+                       prf: KeyDerivationPrf.HMACSHA1,
+                       iterationCount: 1000,
+                       numBytesRequested: 256 / 8));
 
-		// GET: api/Propietarios/test
-		[HttpGet("test")]
-		[AllowAnonymous]
-		public IActionResult Test()
-		{
-			try
-			{
-				return Ok("anduvo");
-			}
-			catch (Exception ex)
-			{
-				return BadRequest(ex);
-			}
-		}
-		/*[HttpGet("token")]
-		public async Task<IActionResult> Token() {
-			try {
-				var perfil = new {
-					Email = User.Identity.Name,
-					Nombre = User.Claims.First(x => x.Type == "FullName").Value,
-					Rol = User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Role).Value
-				};
-				var message = new MimeKit.MimeMessage();
-				message.To.Add(new MailboxAddress(perfil.Nombre, perfil.Email));
-				message.From.Add(new MailboxAddress(perfil.Nombre, perfil.Email));
-				message.Subject = "Correo de prueba";
-				message.Body = new TextPart("html") {
-					Text = @$"<h1>Hola</h1>
-					<p>¡Bienvenido, {perfil.Nombre} a la app de Vicky!</p>",
-				};
-				message.Headers.Add("Encabezado", "Valor");
-				MailKit.Net.Smtp.SmtpClient client = new SmtpClient();
-				client.ServerCertificateValidationCallback = (object sender,
-				System.Security.Cryptography.X509Certificates.X509Certificate certificate,
-				System.Security.Cryptography.X509Certificates.X509Chain chain,
-				System.Net.Security.SslPolicyErrors sslPolicyErrors) => { return true;};
-				client.Connect("smtp.gmail.com", 465, MailKit.Security.SecureSocketOptions.Auto);
-				client.Authenticate(config["SMTPUser"], config["SMTPPass"]);
-				await client.SendAsync(message);
-				return Ok(perfil);
-			}
-			catch (Exception ex) {
-				return BadRequest(ex.Message);
-			}
-				
-			}
-*/
-		// GET: api/Propietarios/test/5
-		[HttpGet("test/{codigo}")]
-		[AllowAnonymous]
-		public IActionResult Code(int codigo)
-		{
-			try
-			{
-				//StatusCodes.Status418ImATeapot //constantes con códigos
-				return StatusCode(codigo, new { Mensaje = "Anduvo", Error = false });
-			}
-			catch (Exception ex)
-			{
-				return BadRequest(ex);
-			}
-		}
+
+                var p = await contexto.Propietario.SingleOrDefaultAsync(x => x.Email == User.Identity.Name);
+                string PassVieja = p.Clave;
+
+                if (PassVieja == hashedPassVieja)
+                {
+
+                    p.Clave = hashedPassNueva;
+                    contexto.Propietario.Update(p);
+                    await contexto.SaveChangesAsync();
+                    return Ok(p);
+                }
+                return BadRequest();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+        // GET: api/<controller>
+        [HttpGet("token")]
+        public async Task<ActionResult> token()
+        {
+            try
+            {
+                var perfil = new
+                {
+                    Email = User.Identity.Name,
+                    Nombre = User.Claims.First(x => x.Type == "FullName").Value,
+                    Rol = User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Role).Value
+                };
+
+                Random rand = new Random(Environment.TickCount);
+                string randomChars = "ABCDEFGHJKLMNOPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz0123456789";
+                string nuevaClave = "";
+                for (int i = 0; i < 8; i++)
+                {
+                    nuevaClave += randomChars[rand.Next(0, randomChars.Length)];
+                }
+
+                String nuevaClaveSin = nuevaClave;
+
+                nuevaClave = Convert.ToBase64String(KeyDerivation.Pbkdf2(
+                            password: nuevaClave,
+                            salt: System.Text.Encoding.ASCII.GetBytes(config["Salt"]),
+                            prf: KeyDerivationPrf.HMACSHA1,
+                            iterationCount: 1000,
+                            numBytesRequested: 256 / 8));
+
+
+                Propietario original = await contexto.Propietario.AsNoTracking().FirstOrDefaultAsync(x => x.Email == perfil.Email);
+                original.Clave = nuevaClave;
+                contexto.Propietario.Update(original);
+                await contexto.SaveChangesAsync();
+
+                var message = new MimeKit.MimeMessage();
+                message.To.Add(new MailboxAddress(perfil.Nombre, "mvicalaniz@gmail.com"));
+                message.From.Add(new MailboxAddress(perfil.Nombre, "mvicalaniz@gmail.com"));
+                message.Subject = "Testing";
+                message.Body = new TextPart("html")
+                {
+                    Text = @$"<h1>Hola {perfil.Nombre}!</h1>
+					<p> Tu nueva clave es: <b>{nuevaClaveSin}</b></p><br>
+                    <p> Gracias!</p>",
+                };
+
+                message.Headers.Add("Encabezado", "Valor");
+                MailKit.Net.Smtp.SmtpClient client = new MailKit.Net.Smtp.SmtpClient();
+                client.ServerCertificateValidationCallback = (object sender,
+                System.Security.Cryptography.X509Certificates.X509Certificate certificate,
+                System.Security.Cryptography.X509Certificates.X509Chain chain,
+                System.Net.Security.SslPolicyErrors sslPolicyErrors) =>
+                { return true; };
+                client.Connect("smtp.gmail.com", 465, MailKit.Security.SecureSocketOptions.Auto);
+                //			client.Authenticate(config["SMTPUser"], config["SMTPPass"]);
+                client.Authenticate("ulp.api.net@gmail.com", "ktitieuikmuzcuup");
+
+                await client.SendAsync(message);
+                return Ok(perfil);
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+
+        // GET api/<controller>/5
+        [HttpPost("reestablecer")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetByEmail([FromForm] string email)
+        {
+            try
+            {   //método sin autenticar, busca el propietario xemail
+                var entidad = await contexto.Propietario.FirstOrDefaultAsync(x => x.Email == email);
+
+                var key = new SymmetricSecurityKey(
+                        System.Text.Encoding.ASCII.GetBytes(config["TokenAuthentication:SecretKey"]));
+                var credenciales = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+                var claims = new List<Claim>
+                    {
+                        new Claim(ClaimTypes.Name, entidad.Email),
+                        new Claim("FullName", entidad.Nombre + " " + entidad.Apellido),
+                        new Claim("id", entidad.Id + " " ),
+                        new Claim(ClaimTypes.Role, "Propietario"),
+					};
+
+                var token = new JwtSecurityToken(
+                    issuer: config["TokenAuthentication:Issuer"],
+                    audience: config["TokenAuthentication:Audience"],
+                    claims: claims,
+                    expires: DateTime.Now.AddMinutes(600),
+                    signingCredentials: credenciales
+                );
+                var to = new JwtSecurityTokenHandler().WriteToken(token);
+
+                var direccion = "http://192.168.2.53:5000/API/Propietarios/token?access_token=" + to;
+                try
+                {
+
+
+                    var message = new MimeKit.MimeMessage();
+                    message.To.Add(new MailboxAddress(entidad.Nombre, "mvicalaniz@gmail.com"));
+                    message.From.Add(new MailboxAddress(entidad.Nombre, "mvicalaniz@gmail.com"));
+                    message.Subject = "Testing";
+                    message.Body = new TextPart("html")
+
+
+                    {
+                        Text = @$"<h1>Hola</h1>
+					<p>Bienvenido, {entidad.Nombre}! <a href={direccion} >Presione aquí para reestablecer su clave.</a> </p>",
+                    };
+
+                    message.Headers.Add("Encabezado", "Valor");
+                    MailKit.Net.Smtp.SmtpClient client = new MailKit.Net.Smtp.SmtpClient();
+                    client.ServerCertificateValidationCallback = (object sender,
+                    System.Security.Cryptography.X509Certificates.X509Certificate certificate,
+                    System.Security.Cryptography.X509Certificates.X509Chain chain,
+                    System.Net.Security.SslPolicyErrors sslPolicyErrors) =>
+                    { return true; };
+                    client.Connect("smtp.gmail.com", 465, MailKit.Security.SecureSocketOptions.Auto);
+                    //			client.Authenticate(config["SMTPUser"], config["SMTPPass"]);
+                    client.Authenticate("ulp.api.net@gmail.com", "ktitieuikmuzcuup");
+
+                    await client.SendAsync(message);
+                    //	return Ok(perfil);
+
+                }
+                catch (Exception ex)
+                {
+                    return BadRequest(ex.Message);
+                }
+                return entidad != null ? Ok(entidad) : NotFound();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
 	}
+	
 }

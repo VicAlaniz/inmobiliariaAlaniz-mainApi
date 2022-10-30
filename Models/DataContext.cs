@@ -11,6 +11,8 @@ namespace InmobiliariaAlaniz.Models
         public DbSet<Propietario> Propietario { get; set; }
         public DbSet<Inquilino> Inquilino { get; set; }
         public DbSet<Inmueble> Inmueble { get; set; }
+        public DbSet<Contrato> Contrato { get; set; }
+        
 
     }
 }

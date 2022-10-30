@@ -24,5 +24,6 @@ public class Contrato {
 
     [Display(Name = "Fecha Finalización")]
     public DateTime FechaFin {get; set;}
+    public Double MontoAlquiler {get; set;}
   
 }

@@ -11,4 +11,5 @@ public class Propietario {
     public string Email {get; set;}
     [Required, DataType(DataType.Password)]
     public string Clave { get; set; }
+    public string? ImgPerfil { get; set; }
 }

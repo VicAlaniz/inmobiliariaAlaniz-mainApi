@@ -35,23 +35,22 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
                             configuration["TokenAuthentication:SecretKey"])),
                     };
                     options.Events = new JwtBearerEvents
-					{
-						OnMessageReceived = context =>
-						{
-							// Read the token out of the query string
-							var accessToken = context.Request.Query["access_token"];
-							// If the request is for our hub...
-							var path = context.HttpContext.Request.Path;
-							if (!string.IsNullOrEmpty(accessToken) &&
-								(path.StartsWithSegments("/chatsegurohub") ||
-                                path.StartsWithSegments("/api/propietarios/reset") ||
-                                path.StartsWithSegments("/api/propietarios/token")))
-							{//reemplazar la url por la usada en la ruta ⬆
-								context.Token = accessToken;
-							}
-							return Task.CompletedTask;
-						}
-					};
+                    {
+                        OnMessageReceived = context =>
+                        {
+                            // Read the token out of the query string
+                            var accessToken = context.Request.Query["access_token"];
+                            // If the request is for our hub...
+                            var path = context.HttpContext.Request.Path;
+                            if (!string.IsNullOrEmpty(accessToken) &&
+                                path.StartsWithSegments("/API/Propietarios/token"))
+                            {//reemplazar la url por la usada en la ruta 
+                                context.Token = accessToken;
+                            }
+                            return Task.CompletedTask;
+                        }
+                    };
+
                     });
 
 builder.Services.AddAuthorization(options =>

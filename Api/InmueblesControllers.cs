@@ -1,6 +1,8 @@
 using InmobiliariaAlaniz.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.Features;
+
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -15,11 +17,14 @@ namespace InmobiliariaAlaniz.Api
     {
         private readonly DataContext contexto;
 		private readonly IConfiguration config;
+        private readonly IWebHostEnvironment environment;
 
-		public InmueblesController(DataContext contexto, IConfiguration config)
+
+		public InmueblesController(DataContext contexto, IConfiguration config, IWebHostEnvironment environment)
 		{
 			this.contexto = contexto;
 			this.config = config;
+            this.environment = environment;
 		}
 
         // GET: api/<controller>
@@ -54,60 +59,59 @@ namespace InmobiliariaAlaniz.Api
 
         // POST api/<controller>
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] Inmueble entidad)
+        public async Task<IActionResult> Post([FromBody] Inmueble inmueble)
         {
+            
             try
             {
-                if (ModelState.IsValid)
+        
+              if (inmueble.Imagen != null)
                 {
-                    entidad.PropietarioId = contexto.Propietario.Single(e => e.Email == User.Identity.Name).Id;
-                    contexto.Inmueble.Add(entidad);
-                    contexto.SaveChanges();
-                    return CreatedAtAction(nameof(Get), new { id = entidad.Id }, entidad);
+                    var feature = HttpContext.Features.Get<IHttpConnectionFeature>();
+                    var LocalPort = feature?.LocalPort.ToString();
+                    var ipv4 = HttpContext.Connection.LocalIpAddress.MapToIPv4().ToString();
+                    var ipConexion = "http://" + ipv4 + ":" + LocalPort + "/";
+
+                    MemoryStream stream1 = new MemoryStream(Convert.FromBase64String(inmueble.Imagen));
+                    IFormFile inmuebleFoto = new FormFile(stream1, 0, stream1.Length, "inmueble", ".jpg");
+                    string wwwPath = environment.WebRootPath;
+                    string path = Path.Combine(wwwPath, "Uploads");
+                    if (!Directory.Exists(path))
+                    {
+                        Directory.CreateDirectory(path);
+                    }
+                    Random r = new Random();
+                    string fileName = "inmueble_" + inmueble.PropietarioId + r.Next(0, 100000) + Path.GetExtension(inmuebleFoto.FileName);
+                    string pathCompleto = Path.Combine(path, fileName);
+
+                    inmueble.Imagen = Path.Combine(ipConexion, "Uploads/", fileName);
+                    using (FileStream stream = new FileStream(pathCompleto, FileMode.Create))
+                    {
+                        inmuebleFoto.CopyTo(stream);
+                    }
+
                 }
-                return BadRequest();
+                await contexto.Inmueble.AddAsync(inmueble);
+                contexto.SaveChanges();
+                return CreatedAtAction(nameof(Get), new { id = inmueble.Id }, inmueble);
             }
             catch (Exception ex)
             {
                 return BadRequest(ex.Message);
             }
         }
-/*
-        // PUT api/<controller>/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Put([FromBody]int id, Inmueble entidad)
-        {
-            try
-            {
-                if (ModelState.IsValid && contexto.Inmueble.AsNoTracking().Include(e=>e.Duenio).FirstOrDefault(e => e.Id == id && e.Duenio.Email == User.Identity.Name) != null)
-                {
-                    entidad.Id = id;
-                    contexto.Inmueble.Update(entidad);
-                    contexto.SaveChanges();
-                    return Ok(entidad);
-                }
-                return BadRequest();
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex);
-            }
-        }
-        */
+
         
-        [HttpPost("CambiarEstado")]
-        public async Task<ActionResult> CambiarEstado([FromForm]int id)
+        [HttpPut()]
+        public async Task<ActionResult> CambiarEstado([FromBody]Inmueble inmueble)
         {
             try
             {
-                if(ModelState.IsValid)
+                if (ModelState.IsValid)
 					{
-						var propietario = await contexto.Propietario.FirstOrDefaultAsync(x => x.Email == User.Identity.Name);
-						var inmueble = contexto.Inmueble.Include(x => x.Duenio).Where(y => y.Duenio.Email == propietario.Email).SingleOrDefault(z => z.Id == id);
-						inmueble.Estado = !inmueble.Estado;
 						contexto.Inmueble.Update(inmueble);
 						await contexto.SaveChangesAsync();
-						return Ok(inmueble.Estado);
+						return Ok(inmueble);
 					}
 					else
 					{
@@ -120,47 +124,6 @@ namespace InmobiliariaAlaniz.Api
             }
         }
 
-        // DELETE api/<controller>/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
-        {
-            try
-            {
-                var entidad = contexto.Inmueble.Include(e => e.Duenio).FirstOrDefault(e => e.Id == id && e.Duenio.Email == User.Identity.Name);
-                if (entidad != null)
-                {
-                    contexto.Inmueble.Remove(entidad);
-                    contexto.SaveChanges();
-                    return Ok();
-                }
-                return BadRequest();
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex);
-            }
-		}
-/*
-		// DELETE api/<controller>/5
-		[HttpDelete("BajaLogica/{id}")]
-		public async Task<IActionResult> BajaLogica(int id)
-		{
-			try
-			{
-				var entidad = contexto.Inmueble.Include(e => e.Duenio).FirstOrDefault(e => e.Id == id && e.Duenio.Email == User.Identity.Name);
-				if (entidad != null)
-				{
-					entidad.Superficie = -1;//cambiar por estado = 0
-					contexto.Inmueble.Update(entidad);
-					contexto.SaveChanges();
-					return Ok();
-				}
-				return BadRequest();
-			}
-			catch (Exception ex)
-			{
-				return BadRequest(ex);
-			}
-		}*/
+ 
 	}
 }
